@@ -1,0 +1,76 @@
+import streamlit as st
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import sqlite3
+import nltk
+from nltk.stem import PorterStemmer
+
+# --- LOW LEVEL: TEXT PROCESSING ---
+nltk.download('punkt')
+stemmer = PorterStemmer()
+
+def preprocess(text):
+    tokens = nltk.word_tokenize(text.lower())
+    return " ".join([stemmer.stem(t) for t in tokens])
+
+# --- DATABASE: FEEDBACK LOOP ---
+def init_db():
+    conn = sqlite3.connect('feedback.db')
+    conn.execute('CREATE TABLE IF NOT EXISTS clicks (query TEXT, doc_id INTEGER, count INTEGER)')
+    conn.commit()
+    return conn
+
+# --- THE SEARCH ENGINE CORE ---
+class SmartSearch:
+    def __init__(self, documents):
+        self.docs = documents
+        self.vectorizer = TfidfVectorizer(preprocessor=preprocess)
+        self.tfidf_matrix = self.vectorizer.fit_transform(documents['text'])
+
+    def search(self, query, w1=0.7, w2=0.3):
+        # f1: Content Similarity (TF-IDF)
+        query_vec = self.vectorizer.transform([query])
+        content_scores = cosine_similarity(query_vec, self.tfidf_matrix).flatten()
+        
+        # f2: Feedback Feature (Click history)
+        conn = init_db()
+        feedback_scores = []
+        for i in range(len(self.docs)):
+            res = conn.execute('SELECT sum(count) FROM clicks WHERE query LIKE ? AND doc_id = ?', 
+                               ('%'+query+'%', i)).fetchone()[0]
+            feedback_scores.append(res if res else 0)
+        
+        # Normalize feedback to [0, 1]
+        max_f = max(feedback_scores) if max(feedback_scores) > 0 else 1
+        feedback_scores = [f/max_f for f in feedback_scores]
+
+        # FINAL AGGREGATED SCORE
+        final_scores = (w1 * content_scores) + (w2 * pd.Series(feedback_scores))
+        
+        results = self.docs.copy()
+        results['score'] = final_scores
+        return results.sort_values(by='score', ascending=False)
+
+# --- HIGH LEVEL: STREAMLIT UI ---
+st.title("🚀 Rohit's Smart Knowledge Search")
+
+# Sample Data
+data = pd.DataFrame({
+    'title': ['Python Basics', 'SQL for Data Analysts', 'Electronics 101', 'Search Relevancy Tips'],
+    'text': ['Learn python programming and loops', 'Master SQL queries and joins', 'Circuit design and transistors', 'How to use TF-IDF and feedback loops']
+})
+
+engine = SmartSearch(data)
+query = st.text_input("Enter your search query:")
+
+if query:
+    results = engine.search(query)
+    for idx, row in results.iterrows():
+        with st.expander(f"{row['title']} (Score: {row['score']:.2f})"):
+            st.write(row['text'])
+            if st.button(f"Mark as Useful", key=idx):
+                conn = init_db()
+                conn.execute('INSERT INTO clicks (query, doc_id, count) VALUES (?, ?, ?)', (query, idx, 1))
+                conn.commit()
+                st.success("Feedback saved! Results will improve next time.")
