@@ -1,0 +1,42 @@
+[
+  {
+    "id": "1",
+    "text": "Patient presents with acute chest pain. EKG shows ST elevation. Diagnosed with acute myocardial infarction (MI). Prescribed aspirin and statins."
+  },
+  {
+    "id": "2",
+    "text": "Patient is a 45-year-old male. Family history is significant for myocardial infarction in his father at age 50. Patient denies any chest pain or shortness of breath today. Here for routine physical."
+  },
+  {
+    "id": "3",
+    "text": "Rule out MI. Patient has severe acid reflux which mimics heart attack symptoms, but troponin levels are normal."
+  },
+  {
+    "id": "4",
+    "text": "History of present illness: 60yo female with known Type 2 Diabetes Mellitus. Blood sugar is well controlled on Metformin."
+  },
+  {
+    "id": "5",
+    "text": "Patient's mother had diabetes. Patient's HgbA1c is 5.2, indicating no diabetes at present."
+  },
+  {
+    "id": "6",
+    "text": "Patient reports experiencing a 'heart attack' in 2010, but medical records from that hospital show it was a panic attack."
+  },
+  {
+    "id": "7",
+    "text": "Assessment: Essential hypertension. Plan: Increase lisinopril to 20mg daily."
+  },
+  {
+    "id": "8",
+    "text": "Patient's blood pressure is 110/70. No signs of hypertension."
+  },
+  {
+    "id": "9",
+    "text": "Patient is heavily pregnant and experiencing gestational diabetes. Requires close monitoring."
+  },
+  {
+    "id": "10",
+    "text": "Review of Systems: Cardiovascular: (-) Chest pain. (-) Palpitations. Respiratory: (-) Shortness of breath."
+  }
+]

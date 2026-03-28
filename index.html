@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinical Relevancy Search</title>
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --accent-primary: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.5);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.15), transparent 25%);
+            background-attachment: fixed;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            padding: 4rem 2rem;
+            box-sizing: border-box;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Search Bar */
+        .search-wrapper {
+            position: relative;
+            width: 100%;
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1.2rem 1.5rem 1.2rem 3.5rem;
+            font-size: 1.2rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            color: var(--text-main);
+            box-sizing: border-box;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px var(--accent-glow);
+            background: rgba(30, 41, 59, 0.9);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            transition: color 0.3s ease;
+        }
+
+        .search-input:focus + .search-icon {
+            color: var(--accent-primary);
+        }
+        
+        /* Stats area */
+        .query-stats {
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            display: none;
+        }
+
+        /* Results */
+        .results-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .result-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            animation: fadeInUp 0.5s ease-out both;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .result-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .doc-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 0.75rem;
+        }
+
+        .doc-id {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-family: monospace;
+            letter-spacing: 1px;
+        }
+
+        .doc-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #cbd5e1;
+        }
+        
+        .highlight {
+            background-color: rgba(59, 130, 246, 0.3);
+            color: #fff;
+            padding: 0 4px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        /* Feedback Actions */
+        .feedback-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .feedback-prompt {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-right: auto;
+        }
+
+        .btn-feedback {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-feedback span {
+            font-size: 0.85rem;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+        }
+
+        .btn-feedback:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+        }
+
+        .btn-feedback.up:hover, .btn-feedback.up.active {
+            border-color: var(--success);
+            color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .btn-feedback.down:hover, .btn-feedback.down.active {
+            border-color: var(--danger);
+            color: var(--danger);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Loading Spinner */
+        .loader {
+            display: none;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+        .loader.active {
+            display: flex;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--accent-primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+            background: var(--glass-bg);
+            border-radius: 16px;
+            border: 1px dashed var(--glass-border);
+        }
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Clinical Search Relevancy</h1>
+            <p class="subtitle">Evaluate search accuracy across complex medical notes. See how traditional keyword matching struggles with negations, family histories, and misdiagnoses.</p>
+        </header>
+
+        <div class="search-wrapper">
+            <input type="text" id="searchInput" class="search-input" placeholder="Try searching for 'diabetes' or 'myocardial infarction'..." autocomplete="off">
+            <i class="fas fa-search search-icon"></i>
+        </div>
+
+        <div class="query-stats" id="queryStats">
+            Found <strong id="resultCount">0</strong> results for "<span id="displayQuery"></span>"
+        </div>
+
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+        </div>
+
+        <div class="results-container" id="resultsContainer">
+            <!-- Results injected here -->
+        </div>
+
+        <div class="empty-state" id="emptyState">
+            <i class="fas fa-notes-medical"></i>
+            <h3>No records found</h3>
+            <p>Try adjusting your search terms.</p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin; // Adapts to where it's hosted
+        const searchInput = document.getElementById('searchInput');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const loader = document.getElementById('loader');
+        const emptyState = document.getElementById('emptyState');
+        const queryStats = document.getElementById('queryStats');
+        const resultCount = document.getElementById('resultCount');
+        const displayQuery = document.getElementById('displayQuery');
+
+        let debounceTimer;
+
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(debounceTimer);
+            const query = e.target.value.trim();
+            
+            if (query.length === 0) {
+                resultsContainer.innerHTML = '';
+                queryStats.style.display = 'none';
+                emptyState.style.display = 'none';
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                performSearch(query);
+            }, 400); // 400ms debounce
+        });
+
+        async function performSearch(query) {
+            resultsContainer.innerHTML = '';
+            emptyState.style.display = 'none';
+            queryStats.style.display = 'none';
+            loader.classList.add('active');
+
+            try {
+                // In production, might need to ensure API_BASE points to the backend
+                const response = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                loader.classList.remove('active');
+                
+                if (data.results && data.results.length > 0) {
+                    displayQuery.textContent = query;
+                    resultCount.textContent = data.results.length;
+                    queryStats.style.display = 'block';
+                    renderResults(data.results, query);
+                } else {
+                    emptyState.style.display = 'block';
+                }
+            } catch (err) {
+                console.error("Search failed:", err);
+                loader.classList.remove('active');
+            }
+        }
+
+        function highlightText(text, query) {
+            if (!query) return text;
+            const regex = new RegExp(`(${query})`, 'gi');
+            return text.replace(regex, '<span class="highlight">$1</span>');
+        }
+
+        function renderResults(results, currentQuery) {
+            results.forEach((doc, index) => {
+                const card = document.createElement('div');
+                card.className = 'result-card';
+                card.style.animationDelay = `${index * 0.1}s`;
+                
+                const highlightedText = highlightText(doc.text, currentQuery);
+
+                card.innerHTML = `
+                    <div class="doc-meta">
+                        <span class="doc-id">DOC ID: ${doc.id}</span>
+                        <span>Clinical Note</span>
+                    </div>
+                    <div class="doc-text">
+                        ${highlightedText}
+                    </div>
+                    <div class="feedback-actions">
+                        <span class="feedback-prompt">Is this document a TRUE positive for the condition searched?</span>
+                        <button class="btn-feedback up" data-id="${doc.id}" data-rating="up" data-query="${currentQuery}">
+                            <i class="fas fa-thumbs-up"></i>
+                            <span>Relevant</span>
+                        </button>
+                        <button class="btn-feedback down" data-id="${doc.id}" data-rating="down" data-query="${currentQuery}">
+                            <i class="fas fa-thumbs-down"></i>
+                            <span>Irrelevant</span>
+                        </button>
+                    </div>
+                `;
+
+                resultsContainer.appendChild(card);
+            });
+
+            // Attach feedback listeners
+            const btns = resultsContainer.querySelectorAll('.btn-feedback');
+            btns.forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const button = e.currentTarget;
+                    const docId = button.getAttribute('data-id');
+                    const rating = button.getAttribute('data-rating');
+                    const query = button.getAttribute('data-query');
+
+                    // Visual feedback
+                    const parent = button.parentElement;
+                    parent.querySelectorAll('.btn-feedback').forEach(b => b.classList.remove('active'));
+                    button.classList.add('active');
+                    parent.querySelector('.feedback-prompt').textContent = "Thanks for evaluating!";
+                    parent.querySelector('.feedback-prompt').style.color = "var(--success)";
+
+                    // Submit to backend
+                    try {
+                        await fetch(`${API_BASE}/feedback`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                query: query,
+                                document_id: docId,
+                                rating: rating
+                            })
+                        });
+                    } catch (error) {
+                        console.error('Failed to submit rating', error);
+                        parent.querySelector('.feedback-prompt').textContent = "Failed to submit rating.";
+                        parent.querySelector('.feedback-prompt').style.color = "var(--danger)";
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>
